@@ -19,4 +19,4 @@ If you are not using static ip, access [http://localhost:8080](http://localhost:
 
 ### PHP 8
 
-For PHP 8 you can use a the `Dockerfile-php8` at the docker-compose instead of the line `dockerfile: Dockerfile`.
+For PHP 8 you can use a the `Dockerfile-php8` at the docker-compose instead at the line `dockerfile: Dockerfile`.
