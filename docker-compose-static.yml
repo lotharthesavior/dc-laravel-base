@@ -1,0 +1,87 @@
+version: '3.7'
+
+services:
+
+  php:
+    build:
+      context: ./docker/laravel/php
+      dockerfile: Dockerfile
+    container_name: ${DOCKER_APP}-php
+    volumes:
+      - "./app:/var/www/html"
+    expose:
+      - 9000
+#    environment:
+#      XDEBUG_CONFIG: remote_host=host.docker.internal
+    links:
+      - mysql
+      - redis
+    networks:
+      develop-network:
+        ipv4_address: ${DOCKER_APP_IP}.0.2
+
+  nginx:
+    image: nginx:stable-alpine
+    container_name: ${DOCKER_APP}-nginx
+    expose:
+      - "80"
+      - "443"
+    volumes:
+      - ./app:/var/www/html
+      - ./certs:/var/www/certs
+      - ./nginx/econoroute-static.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php
+    networks:
+      develop-network:
+        ipv4_address: ${DOCKER_APP_IP}.0.3
+
+  mysql:
+    build:
+      context: ./docker/mysql
+      network: host
+    container_name: ${DOCKER_APP}-mysql
+    restart: unless-stopped
+    tty: true
+    expose:
+      - "3306"
+    environment:
+      MYSQL_DATABASE: ${DOCKER_MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${DOCKER_MYSQL_ROOT_PASS}
+    volumes:
+      - ./docker/my.cnf:/etc/mysql/conf.d/wt-my.cnf
+      - ./docker/mysql_data:/var/lib/mysql
+    networks:
+      develop-network:
+        ipv4_address: ${DOCKER_APP_IP}.0.5
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: ${DOCKER_APP}-phpmyadmin
+    restart: always
+    expose:
+      - "80"
+    volumes:
+      - ./phpmyadmin/config.user.inc.php:/etc/phpmyadmin/config.user.inc.php
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+    networks:
+      develop-network:
+        ipv4_address: ${DOCKER_APP_IP}.0.6
+
+  redis:
+    image: redis:5.0-alpine
+    container_name: ${DOCKER_APP}-redis
+    networks:
+      develop-network:
+        ipv4_address: ${DOCKER_APP_IP}.0.7
+
+networks:
+  develop-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${DOCKER_APP_IP}.0.0/16
+          gateway: ${DOCKER_APP_IP}.0.1

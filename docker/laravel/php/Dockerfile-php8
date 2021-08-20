@@ -1,0 +1,36 @@
+FROM php:8.0-fpm
+
+WORKDIR /var/www/html
+
+RUN apt-get update
+
+COPY memory_limit.ini $PHP_INI_DIR/conf.d/
+
+# update
+RUN apt-get update && apt-get install -y \
+        libfreetype6-dev \
+        libjpeg62-turbo-dev \
+        libpng-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) gd
+
+# Install dependencies
+RUN apt-get install -y libpq-dev libpng-dev
+
+# Install php extensions
+RUN docker-php-ext-install pdo_mysql
+
+#install some base extensions
+RUN apt-get install -y libzip-dev zip \
+  && docker-php-ext-install zip
+
+# Install debug dependencies
+RUN apt-get install git -y \
+    && apt-get install vim -y \
+    && apt-get install curl -y \
+    && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+COPY entrypoint.sh /usr/local/bin/entrypoint
+RUN chmod +x /usr/local/bin/entrypoint
+
+ENTRYPOINT ["entrypoint"]

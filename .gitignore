@@ -1,0 +1,5 @@
+docker/dynamodb_data
+docker/mysql_data
+.env
+.idea
+docker/postgres_data
