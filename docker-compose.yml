@@ -5,7 +5,7 @@ services:
   php:
     build:
       context: ./docker/laravel/php
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile-php8
     container_name: ${DOCKER_APP}-php
     volumes:
       - "./app:/var/www/html"
@@ -13,13 +13,30 @@ services:
       - 9000
     ports:
       - "9000:9000"
-    # environment:
-    #   XDEBUG_CONFIG: remote_host=host.docker.internal
     links:
       - mysql
       - redis
     networks:
       - develop-network
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
+
+  phpqueue:
+    build:
+      context: ./docker/laravel/php
+      dockerfile: Dockerfile-php8-queue
+    container_name: ${DOCKER_APP}-php-queue
+    volumes:
+      - "./app:/var/www/html"
+    expose:
+      - 9000
+    links:
+      - mysql
+      - redis
+    networks:
+      - develop-network
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
 
   nginx:
     image: nginx:stable-alpine
@@ -35,6 +52,8 @@ services:
       - php
     networks:
       - develop-network
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
 
   mysql:
     build:
@@ -69,13 +88,31 @@ services:
     environment:
       PMA_HOST: mysql
       PMA_PORT: 3306
-      PMA_ARBITRARY: 1
     networks:
       - develop-network
 
   redis:
     image: redis:5.0-alpine
     container_name: ${DOCKER_APP}-redis
+    networks:
+      - develop-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: ${DOCKER_APP}-rabbitmq
+    expose:
+      - "5672"
+      - "15672"
+      - "25672"
+    volumes:
+      - ./docker/rabbitmq/data:/var/lib/rabbitmq
+      - ./docker/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+      - ./docker/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json
+      - ./docker/rabbitmq/enable_plugins:/etc/rabbitmq/enable_plugins
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+      - "25672:25672"
     networks:
       - develop-network
 
