@@ -88,6 +88,7 @@ services:
     environment:
       PMA_HOST: mysql
       PMA_PORT: 3306
+      #PMA_ARBITRARY: 1
     networks:
       - develop-network
 
